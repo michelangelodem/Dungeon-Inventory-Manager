@@ -1,0 +1,10 @@
+{
+    "java.project.sourcePaths": [
+        "DungeonInventoryManager\\DIM\\src"
+    ],
+    "java.project.referencedLibraries": [
+        "DungeonInventoryManager\\DIM\\lib\\jackson-annotations-2.15.2.jar",
+        "DungeonInventoryManager\\DIM\\lib\\jackson-core-2.15.2.jar",
+        "DungeonInventoryManager\\DIM\\lib\\jackson-databind-2.15.2.jar"
+    ]
+}
