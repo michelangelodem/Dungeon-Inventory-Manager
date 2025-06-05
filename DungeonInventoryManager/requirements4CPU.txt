@@ -1,9 +1,14 @@
+#note: This file is for CPU-only installations of the Dungeon Inventory Manager.
+#you simply have to avtivate your virtual environment and run:
+#pip install -r requirements4CPU.txt
+#BUT: for the most cases the CPU version is not recommended, as it is very slow.
+
 fastapi==0.95.2
 uvicorn[standard]==0.22.0
 pydantic==1.10.9
 torch==2.2.2
 diffusers[torch]    
- # You will have to run python -m pip install --upgrade huggingface_hub to get it's latest version = 0.32.4
+huggingface_hub == 0.32.4
 transformers==4.33.1 
 scipy==1.11.2
 ftfy==6.1.1
