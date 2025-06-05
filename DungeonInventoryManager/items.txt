@@ -1,0 +1,25 @@
+koko
+2
+2.0
+2.0
+	
+kitsos
+4
+4.0
+4.0
+	
+spyrgioths
+einai apo zaxaro
+190.0
+0.0
+	
+Sword of light
+2d10 radiant damage with every strike
+1200.0
+1.25
+	
+hlektrika
+einai gia ton poutso
+0.0
+1000.0
+	

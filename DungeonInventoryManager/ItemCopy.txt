@@ -1,0 +1,15 @@
+Biochem Armor.
+On command leaks chemical gasses dealing 2d12 on any target in the area. Ehanced reactions allow you to deal extra 2d12 damage when attacking and while getting attacked.
+0.0
+5.5
+	
+Spear of Immortal.
+Roll a d20 between 1-13 you deal 4d12 or you can disappear in smoke. 14-17 deal 5d12 or heal for 1d12 any target. 18-20 deal 7d12.
+0.0
+20.0
+	
+Chemgun
+deals 1d20 dmg and makes the target fall asleep
+5000.0
+1.0
+	
