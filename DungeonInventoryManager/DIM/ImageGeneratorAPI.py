@@ -1,4 +1,4 @@
-from diffusers.pipelines.pixart_alpha.pipeline_pixart_sigma import PixArtSigmaPipeline
+from diffusers import PixArtSigmaPipeline
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -10,6 +10,7 @@ import io
 import logging
 import random
 import numpy as np
+import gc
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -38,45 +39,171 @@ class ImageGenerationResponse(BaseModel):
 pipeline = None
 
 def initialize_pipeline():
-    """Initialize the PixArt-Σ pipeline for CPU usage"""
+    """Initialize the PixArt-Σ pipeline for CPU usage with proper error handling"""
     global pipeline
     try:
         logger.info("Loading PixArt-Σ pipeline...")
         
-        # Load the pipeline with CPU optimization
+        # Check if CUDA is available (shouldn't be with CPU-only torch)
+        device = "cpu"
+        logger.info(f"Using device: {device}")
+        
+        # Load the pipeline with CPU-specific optimizations
         pipeline = PixArtSigmaPipeline.from_pretrained(
             "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS",
-            torch_dtype=torch.float32,  # Use float32 for CPU
+            torch_dtype=torch.float32,  # Always use float32 for CPU
             use_safetensors=True,
+            variant=None,  # Don't use fp16 variant
+            local_files_only=False,
         )
         
-        # Move to CPU and optimize for CPU inference
-        pipeline = pipeline.to("cpu")
-        pipeline.enable_attention_slicing()
+        # Move to CPU explicitly
+        pipeline = pipeline.to(device)
         
-        # Enable memory efficient attention if available
+        # CPU-specific optimizations
+        try:
+            # Enable attention slicing for memory efficiency
+            pipeline.enable_attention_slicing(1)
+            logger.info("Enabled attention slicing")
+        except Exception as e:
+            logger.warning(f"Could not enable attention slicing: {e}")
+        
+        # Try to enable memory efficient attention (only if xformers is available)
         try:
             pipeline.enable_xformers_memory_efficient_attention()
-        except:
-            logger.warning("xformers not available, using default attention")
+            logger.info("Enabled xformers memory efficient attention")
+        except Exception as e:
+            logger.warning(f"xformers not available or failed to enable: {e}")
+        
+        # Enable model CPU offload for memory management
+        try:
+            pipeline.enable_model_cpu_offload()
+            logger.info("Enabled model CPU offload")
+        except Exception as e:
+            logger.warning(f"Could not enable model CPU offload: {e}")
+        
+        # Set memory optimization
+        try:
+            pipeline.enable_sequential_cpu_offload()
+            logger.info("Enabled sequential CPU offload")
+        except Exception as e:
+            logger.warning(f"Could not enable sequential CPU offload: {e}")
         
         logger.info("Pipeline loaded successfully on CPU")
         
+        # Test the pipeline with a simple generation
+        logger.info("Testing pipeline...")
+        test_result = pipeline(
+            prompt="a simple test image",
+            num_inference_steps=1,
+            guidance_scale=1.0,
+            width=512,
+            height=512,
+            generator=torch.Generator().manual_seed(42)
+        )
+        logger.info(f"Pipeline test successful. Result type: {type(test_result)}")
+        
+        # Clean up test
+        del test_result
+        gc.collect()
+        
     except Exception as e:
         logger.error(f"Failed to load pipeline: {str(e)}")
+        logger.error(f"Error type: {type(e).__name__}")
         raise e
 
 def pil_to_base64(image: Image.Image) -> str:
     """Convert PIL Image to base64 string"""
-    buffer = io.BytesIO()
-    image.save(buffer, format="PNG")
-    img_str = base64.b64encode(buffer.getvalue()).decode()
-    return img_str
+    try:
+        buffer = io.BytesIO()
+        # Ensure we're working with RGB mode
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
+        image.save(buffer, format="PNG")
+        img_str = base64.b64encode(buffer.getvalue()).decode()
+        return img_str
+    except Exception as e:
+        logger.error(f"Error converting image to base64: {e}")
+        raise e
+
+def extract_images_from_result(result):
+    """Extract PIL images from diffusers pipeline result"""
+    images = []
+    
+    try:
+        # Method 1: Check for .images attribute (most common)
+        if hasattr(result, 'images') and result.images is not None:
+            images = result.images
+            logger.info(f"Found images via .images attribute: {len(images)} images")
+            return images
+        
+        # Method 2: Check if result is directly a list of images
+        if isinstance(result, (list, tuple)):
+            if len(result) > 0 and hasattr(result[0], 'save'):
+                images = result
+                logger.info(f"Result is direct list of images: {len(images)} images")
+                return images
+        
+        # Method 3: Check if result has indexable access
+        if hasattr(result, '__getitem__'):
+            try:
+                potential_images = result[0]
+                if isinstance(potential_images, (list, tuple)):
+                    if len(potential_images) > 0 and hasattr(potential_images[0], 'save'):
+                        images = potential_images
+                        logger.info(f"Found images via indexing: {len(images)} images")
+                        return images
+            except (IndexError, TypeError, KeyError):
+                pass
+        
+        # Method 4: Deep search for PIL Images
+        def find_pil_images(obj, depth=0, max_depth=3):
+            if depth > max_depth:
+                return []
+            found = []
+            
+            # Check if current object is a PIL Image
+            if hasattr(obj, 'save') and hasattr(obj, 'size') and hasattr(obj, 'mode'):
+                found.append(obj)
+            elif isinstance(obj, (list, tuple)):
+                for item in obj:
+                    found.extend(find_pil_images(item, depth + 1, max_depth))
+            elif hasattr(obj, '__dict__'):
+                for attr_name in ['images', 'image', 'output', 'result']:
+                    try:
+                        attr_value = getattr(obj, attr_name, None)
+                        if attr_value is not None:
+                            found.extend(find_pil_images(attr_value, depth + 1, max_depth))
+                    except:
+                        continue
+            
+            return found
+        
+        found_images = find_pil_images(result)
+        if found_images:
+            logger.info(f"Found images via deep search: {len(found_images)} images")
+            return found_images
+        
+        # If no images found, log debug info
+        logger.error(f"Could not extract images from result")
+        logger.error(f"Result type: {type(result)}")
+        if hasattr(result, '__dict__'):
+            logger.error(f"Result attributes: {list(result.__dict__.keys())}")
+        
+        return []
+        
+    except Exception as e:
+        logger.error(f"Error extracting images from result: {e}")
+        return []
 
 @app.on_event("startup")
 async def startup_event():
     """Initialize the pipeline when the server starts"""
-    initialize_pipeline()
+    try:
+        initialize_pipeline()
+    except Exception as e:
+        logger.error(f"Failed to initialize pipeline on startup: {e}")
+        # Don't raise here to allow the server to start even if pipeline fails
 
 @app.get("/")
 async def root():
@@ -87,158 +214,131 @@ async def health_check():
     """Health check endpoint"""
     if pipeline is None:
         return {"status": "error", "message": "Pipeline not loaded"}
-    return {"status": "healthy", "message": "Pipeline ready"}
+    
+    # Check torch installation
+    torch_info = {
+        "version": torch.__version__,
+        "cuda_available": torch.cuda.is_available(),
+        "device_count": torch.cuda.device_count() if torch.cuda.is_available() else 0
+    }
+    
+    return {
+        "status": "healthy", 
+        "message": "Pipeline ready",
+        "torch_info": torch_info
+    }
 
 @app.post("/generate", response_model=ImageGenerationResponse)
 async def generate_image(request: ImageGenerationRequest):
     """Generate images using PixArt-Σ"""
     
     if pipeline is None:
-        raise HTTPException(status_code=500, detail="Pipeline not initialized")
+        # Try to reinitialize if it failed on startup
+        try:
+            initialize_pipeline()
+        except Exception as e:
+            raise HTTPException(status_code=503, detail=f"Pipeline not available: {str(e)}")
     
     try:
+        # Validate input parameters
+        if request.width and request.width < 256:
+            request.width = 256
+        if request.height and request.height < 256:
+            request.height = 256
+        if request.num_inference_steps and request.num_inference_steps < 1:
+            request.num_inference_steps = 1
+        if request.num_images and request.num_images > 4:  # Limit for CPU
+            request.num_images = 4
+        
         # Set seed for reproducibility
-        generator = None
         if request.seed is not None:
-            generator = torch.Generator().manual_seed(request.seed)
             seed_used = request.seed
         else:
-            # Generate a random seed
-            import random
-            seed_used = random.randint(0, 2**32 - 1)
-            generator = torch.Generator().manual_seed(seed_used)
+            seed_used = random.randint(0, 2**31 - 1)  # Use smaller range for compatibility
         
-        logger.info(f"Generating image with prompt: {request.prompt[:50]}...")
+        generator = torch.Generator().manual_seed(seed_used)
         
-        # Generate images
-        with torch.no_grad():  # Disable gradient computation for inference
-            result = pipeline(
-                prompt=request.prompt,
-                negative_prompt=request.negative_prompt if request.negative_prompt else "",
-                width=request.width if request.width is not None else 1024,
-                height=request.height if request.height is not None else 1024,
-                num_inference_steps=request.num_inference_steps if request.num_inference_steps is not None else 20,
-                guidance_scale=request.guidance_scale if request.guidance_scale is not None else 4.5,
-                num_images_per_prompt=request.num_images if request.num_images is not None else 1,
-                generator=generator,
-            )
+        logger.info(f"Generating image with prompt: '{request.prompt[:100]}...'")
+        logger.info(f"Parameters: {request.width}x{request.height}, steps: {request.num_inference_steps}, guidance: {request.guidance_scale}")
         
-        # Convert PIL images to base64
-        base64_images = []
+        # Clear GPU cache if available (shouldn't be necessary for CPU but good practice)
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
         
-        # Debug: Log the result type and structure
-        logger.info(f"Pipeline result type: {type(result)}")
+        # Generate images with proper error handling
         try:
-            if hasattr(result, '__dict__'):
-                logger.info(f"Pipeline result attributes: {list(result.__dict__.keys())}")
+            with torch.no_grad():
+                result = pipeline(
+                    prompt=request.prompt,
+                    negative_prompt=request.negative_prompt or "",
+                    width=request.width,
+                    height=request.height,
+                    num_inference_steps=request.num_inference_steps,
+                    guidance_scale=request.guidance_scale,
+                    num_images_per_prompt=request.num_images,
+                    generator=generator,
+                )
+        except RuntimeError as rt_error:
+            if "out of memory" in str(rt_error).lower():
+                # Try with smaller parameters
+                logger.warning("Out of memory, trying with reduced parameters")
+                with torch.no_grad():
+                    result = pipeline(
+                        prompt=request.prompt,
+                        negative_prompt=request.negative_prompt or "",
+                        width=min(request.width, 512),
+                        height=min(request.height, 512),
+                        num_inference_steps=min(request.num_inference_steps, 10),
+                        guidance_scale=request.guidance_scale,
+                        num_images_per_prompt=1,
+                        generator=generator,
+                    )
             else:
-                logger.info(f"Pipeline result dir: {[attr for attr in dir(result) if not attr.startswith('_')]}")
-        except Exception as e:
-            logger.warning(f"Could not inspect result attributes: {e}")
+                raise rt_error
         
-        # Handle different pipeline output formats
-        images = None
+        # Extract images from result
+        images = extract_images_from_result(result)
         
-        # Try different ways to extract images from the result
-        if hasattr(result, 'images'):
-            images_attr = getattr(result, 'images', None)
-            if images_attr is not None:
-                images = images_attr
-                logger.info(f"Found images via .images attribute: {len(images)} images")
-            else:
-                logger.info("Result has .images attribute but it's None")
-        elif isinstance(result, (list, tuple)):
-            # Check if it's a direct list/tuple of images
-            if len(result) > 0:
-                # Check if first element is PIL Image
-                if hasattr(result[0], 'save'):  # PIL Image has save method
-                    images = result
-                    logger.info(f"Direct list of images: {len(images)} images")
-                # Check if first element is a list of images
-                elif isinstance(result[0], (list, tuple)) and len(result[0]) > 0:
-                    if hasattr(result[0][0], 'save'):
-                        images = result[0]
-                        logger.info(f"Nested list of images: {len(images)} images")
-        elif hasattr(result, '__getitem__'):
-            # Try to access as indexable (some pipelines return custom objects)
-            try:
-                potential_images = result[0]
-                if isinstance(potential_images, (list, tuple)):
-                    if len(potential_images) > 0 and hasattr(potential_images[0], 'save'):
-                        images = potential_images
-                        logger.info(f"Indexed images: {len(images)} images")
-                elif hasattr(potential_images, 'save'):
-                    images = [potential_images]
-                    logger.info("Single indexed image")
-            except (IndexError, TypeError, KeyError) as e:
-                logger.warning(f"Could not access result by index: {e}")
+        if not images:
+            raise ValueError("No images were generated or extracted from the pipeline result")
         
-        # Final fallback - try to find any PIL Images in the result
-        if images is None:
-            def find_pil_images(obj, depth=0):
-                if depth > 3:  # Prevent infinite recursion
-                    return []
-                found = []
-                if hasattr(obj, 'save') and hasattr(obj, 'size'):  # PIL Image
-                    found.append(obj)
-                elif isinstance(obj, (list, tuple)):
-                    for item in obj:
-                        found.extend(find_pil_images(item, depth + 1))
-                elif hasattr(obj, '__dict__'):
-                    for attr_name in dir(obj):
-                        if not attr_name.startswith('_'):
-                            try:
-                                attr_value = getattr(obj, attr_name)
-                                found.extend(find_pil_images(attr_value, depth + 1))
-                            except:
-                                continue
-                return found
-            
-            found_images = find_pil_images(result)
-            if found_images:
-                images = found_images
-                logger.info(f"Found images via deep search: {len(images)} images")
-        
-        if images is None or len(images) == 0:
-            # Log detailed information for debugging
-            logger.error(f"Could not extract images from pipeline result.")
-            logger.error(f"Result type: {type(result)}")
-            logger.error(f"Result content preview: {str(result)[:200]}...")
-            if hasattr(result, '__dict__'):
-                logger.error(f"Result dict: {result.__dict__}")
-            raise ValueError(f"Could not extract images from pipeline result. Result type: {type(result)}, Content preview: {str(result)[:100]}")
-        
+        # Convert images to base64
+        base64_images = []
         for i, image in enumerate(images):
             try:
-                if isinstance(image, Image.Image):
-                    # Convert PIL Image to base64
-                    base64_img = pil_to_base64(image)
-                    base64_images.append(base64_img)
-                    logger.info(f"Successfully converted image {i+1} to base64")
-                else:
-                    logger.error(f"Image {i} is not a PIL Image: {type(image)}")
-                    # Try to convert if it's a tensor or numpy array
-                    if hasattr(image, 'cpu'):  # PyTorch tensor
-                        image_np = image.cpu().numpy()
-                        if image_np.ndim == 3 and image_np.shape[0] in [1, 3]:
-                            # Convert CHW to HWC
-                            image_np = image_np.transpose(1, 2, 0)
-                        if image_np.max() <= 1.0:
-                            image_np = (image_np * 255).astype('uint8')
-                        pil_image = Image.fromarray(image_np.squeeze())
-                        base64_img = pil_to_base64(pil_image)
-                        base64_images.append(base64_img)
-                        logger.info(f"Converted tensor image {i+1} to base64")
-                    else:
-                        raise ValueError(f"Cannot convert image type {type(image)} to PIL Image")
+                if not isinstance(image, Image.Image):
+                    logger.warning(f"Image {i} is not a PIL Image, attempting conversion")
+                    # Try to convert numpy array or tensor to PIL
+                    if hasattr(image, 'cpu'):
+                        image = image.cpu().numpy()
+                    if isinstance(image, np.ndarray):
+                        if image.ndim == 3 and image.shape[0] in [1, 3, 4]:
+                            image = image.transpose(1, 2, 0)
+                        if image.max() <= 1.0:
+                            image = (image * 255).astype(np.uint8)
+                        if image.shape[-1] == 4:  # RGBA
+                            image = image[:, :, :3]  # Convert to RGB
+                        image = Image.fromarray(image.squeeze())
+                
+                base64_img = pil_to_base64(image)
+                base64_images.append(base64_img)
+                logger.info(f"Successfully processed image {i+1}/{len(images)}")
+                
             except Exception as img_error:
                 logger.error(f"Error processing image {i}: {str(img_error)}")
                 continue
         
         if not base64_images:
-            raise ValueError("No valid images generated")
+            raise ValueError("Failed to process any generated images")
         
-        logger.info(f"Successfully generated {len(base64_images)} image(s)")
+        # Clean up
+        if 'result' in locals():
+            del result
+        if 'images' in locals():
+            del images
+        gc.collect()
+        
+        logger.info(f"Successfully generated {len(base64_images)} image(s) with seed {seed_used}")
         
         return ImageGenerationResponse(
             images=base64_images,
@@ -248,6 +348,11 @@ async def generate_image(request: ImageGenerationRequest):
         
     except Exception as e:
         logger.error(f"Error generating image: {str(e)}")
+        logger.error(f"Error type: {type(e).__name__}")
+        
+        # Clean up on error
+        gc.collect()
+        
         raise HTTPException(status_code=500, detail=f"Image generation failed: {str(e)}")
 
 @app.post("/generate-file")
@@ -261,9 +366,8 @@ async def generate_image_file(request: ImageGenerationRequest):
         # Convert base64 back to images for file response
         images_data = []
         for i, base64_img in enumerate(response.images):
-            img_data = base64.b64decode(base64_img)
             images_data.append({
-                "filename": f"generated_image_{i+1}.png",
+                "filename": f"generated_image_{response.seed_used}_{i+1}.png",
                 "data": base64_img,
                 "content_type": "image/png"
             })
@@ -271,21 +375,36 @@ async def generate_image_file(request: ImageGenerationRequest):
         return {
             "images": images_data,
             "seed_used": response.seed_used,
-            "status": "success"
+            "status": "success",
+            "count": len(images_data)
         }
         
     except Exception as e:
         logger.error(f"Error in generate_image_file: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/info")
+async def get_info():
+    """Get information about the current setup"""
+    return {
+        "torch_version": torch.__version__,
+        "cuda_available": torch.cuda.is_available(),
+        "pipeline_loaded": pipeline is not None,
+        "model": "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS",
+        "device": "cpu",
+        "max_recommended_size": "1024x1024",
+        "max_images_per_request": 4
+    }
+
 if __name__ == "__main__":
     import uvicorn
     
     # Run the server
     uvicorn.run(
-        "ImageGeneratorAPI:app",
+        app,  # Use app directly instead of string
         host="0.0.0.0",
         port=8000,
-        reload=False,  # Disable reload for production
-        log_level="info"
+        reload=False,
+        log_level="info",
+        access_log=True
     )
