@@ -25,6 +25,7 @@ public class CommandManager {
         commands.put(3, new ViewItemsCommand(inventoryService));
         commands.put(4, new SearchItemsCommand(inventoryService, scanner));
         commands.put(5, new MakeAttackCommand(inventoryService, scanner));
+        commands.put(6, new GenerateImageCommand(scanner));
     }
     
     public void displayMenu() {

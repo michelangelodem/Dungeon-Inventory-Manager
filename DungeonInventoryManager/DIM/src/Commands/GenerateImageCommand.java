@@ -319,7 +319,7 @@ public class GenerateImageCommand implements ICommand {
     
     @Override
     public int getCommandId() {
-        return 7;
+        return 6;
     }
     
     // Inner class for request data
