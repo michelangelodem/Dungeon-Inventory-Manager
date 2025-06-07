@@ -102,12 +102,10 @@ public class FileService implements IFileService {
     }
     
     private Item readSingleItem(BufferedReader reader) {
-        String itemType;
         String[] itemData;
         String seperator = null;
-        itemType = loadItemType(reader);
             
-        switch (itemType) {
+        switch (loadItemType(reader)) {
             case "WEAPON":
                 Weapon weapon = new Weapon();
                 itemData = weapon.loadItemData(reader);
@@ -132,9 +130,6 @@ public class FileService implements IFileService {
     private String loadItemType(BufferedReader reader) {
         try {
             String itemType = reader.readLine();
-            if (itemType == null) {
-                return null;
-            } 
             return itemType.trim().toUpperCase();
         } catch (IOException e) {
             System.out.println("Error reading item type: " + e.getMessage());
