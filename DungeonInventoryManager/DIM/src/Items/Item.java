@@ -185,11 +185,21 @@ public class Item {
                 name, description, price, weight, quantity);
     }
 
-    public String[] loadItemData(BufferedReader reader) throws IOException {
-            String name = reader.readLine();
-            String description = reader.readLine();
-            String priceStr = reader.readLine();
-            String weightStr = reader.readLine();
+    public String[] loadItemData(BufferedReader reader) {
+        String name = null;
+        String description = null;
+        String priceStr = null;
+        String weightStr = null;
+
+        try {
+            name = reader.readLine();
+            description = reader.readLine();
+            priceStr = reader.readLine();
+            weightStr = reader.readLine();
+        } catch (IOException e) {
+            System.out.println("Error reading item data: " + e.getMessage());
+            return null;
+        }
             String[] itemData = new String[4];
             // Check if any required field is null
             if (name == null || description == null || priceStr == null || weightStr == null) {

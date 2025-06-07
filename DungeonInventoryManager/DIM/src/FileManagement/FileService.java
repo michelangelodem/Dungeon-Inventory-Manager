@@ -92,6 +92,7 @@ public class FileService implements IFileService {
                 if (item.getName() == null) {
                     break;
                 }
+                items.add(item);
             }
         } catch (IOException e) {
             System.out.println("Error reading from file: " + e.getMessage());
@@ -101,37 +102,31 @@ public class FileService implements IFileService {
     }
     
     private Item readSingleItem(BufferedReader reader) {
-        try {
-            String[] itemData;
-            String itemType;
-            itemType = loadItemType(reader);
-            switch (itemType) {
-                case "WEAPON":
-                    Weapon weapon = new Weapon();
-                    itemData = weapon.loadItemData(reader);
-                    break;
-                case "ARMOR":
-                    Armor armor = new Armor();
-                    itemData = armor.loadItemData(reader);
-                    break;
-                default:
-                    Item item = new Item();
-                    itemData = item.loadItemData(reader);
-                    break;        
+        String itemType;
+        String[] itemData;
+        String seperator = null;
+        itemType = loadItemType(reader);
+            
+        switch (itemType) {
+            case "WEAPON":
+                Weapon weapon = new Weapon();
+                itemData = weapon.loadItemData(reader);
+                catchSeparator(reader);
+                weapon.fromStr2Item(itemData);
+                return weapon;
+            case "ARMOR":
+                Armor armor = new Armor();
+                itemData = armor.loadItemData(reader);
+                catchSeparator(reader);
+                armor.fromStr2Item(itemData);
+                return armor;
+            default:
+                Item item = new Item();
+                itemData = item.loadItemData(reader);
+                catchSeparator(reader);
+                item.fromStr2Item(itemData);
+                return item;   
             }
-
-            Item actualItem = new Item();
-            actualItem.fromStr2Item(itemData);
-
-            // Read separator line (---)
-            String separator = reader.readLine();
-            
-            return actualItem;
-            
-        } catch (IOException e) {
-            System.out.println("Error reading item from file: " + e.getMessage());
-            return null;
-        }
     }
 
     private String loadItemType(BufferedReader reader) {
@@ -145,6 +140,17 @@ public class FileService implements IFileService {
             System.out.println("Error reading item type: " + e.getMessage());
         } 
         return null;
+    }
+
+    private void catchSeparator(BufferedReader reader) {
+        try {
+            String separator = reader.readLine();
+            if (separator == null || !separator.equals("---")) {
+                System.out.println("Warning: Expected separator '---' not found");
+            }
+        } catch (IOException e) {
+            System.out.println("Error reading separator: " + e.getMessage());
+        }
     }
 
 }
