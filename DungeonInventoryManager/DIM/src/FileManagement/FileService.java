@@ -50,21 +50,33 @@ public class FileService implements IFileService {
     
     private void writeItemToFile(Item item) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName, true))) {
-            writer.write(item.getName() + "\n" + 
-                        item.getDescription() + "\n" + 
-                        item.getPrice() + "\n" + 
-                        item.getWeight() + "\n\t");
-
+            // Write item type first
             if (item instanceof Weapon) {
-                Weapon sword = (Weapon) item;
-                writer.write(sword.getDamage() + "\n");
+                writer.write("WEAPON\n");
+            } else if (item instanceof Armor) {
+                writer.write("ARMOR\n");
+            } else {
+                writer.write("ITEM\n");
             }
-            else if (item instanceof Armor) {
+            
+            // Write basic item data
+            writer.write(item.getName() + "\n");
+            writer.write(item.getDescription() + "\n");
+            writer.write(String.valueOf(item.getPrice()) + "\n");
+            writer.write(String.valueOf(item.getWeight()) + "\n");
+
+            // Write specific data based on item type
+            if (item instanceof Weapon) {
+                Weapon weapon = (Weapon) item;
+                writer.write(weapon.getDamage() + "\n");
+            } else if (item instanceof Armor) {
                 Armor armor = (Armor) item;
-                writer.write(armor.getArmorClass() + "\n");
+                writer.write(String.valueOf(armor.getArmorClass()) + "\n");
             }
-            writer.write("\t");
-            writer.newLine();
+            
+            // Write separator
+            writer.write("---\n");
+            
         } catch (IOException e) {
             System.out.println("Error writing to file: " + e.getMessage());
         }
@@ -73,14 +85,13 @@ public class FileService implements IFileService {
     @Override
     public List<Item> readItems() {
         List<Item> items = new ArrayList<>();
-        
+
         try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
             while (true) {
                 Item item = readSingleItem(reader);
                 if (item.getName() == null) {
                     break;
                 }
-                items.add(item);
             }
         } catch (IOException e) {
             System.out.println("Error reading from file: " + e.getMessage());
@@ -90,47 +101,50 @@ public class FileService implements IFileService {
     }
     
     private Item readSingleItem(BufferedReader reader) {
-        StringBuilder data = new StringBuilder();
-        Item item = new Item();
-        
         try {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.trim().isEmpty()) {
+            String[] itemData;
+            String itemType;
+            itemType = loadItemType(reader);
+            switch (itemType) {
+                case "WEAPON":
+                    Weapon weapon = new Weapon();
+                    itemData = weapon.loadItemData(reader);
                     break;
-                }
-                data.append(line).append("\n");
+                case "ARMOR":
+                    Armor armor = new Armor();
+                    itemData = armor.loadItemData(reader);
+                    break;
+                default:
+                    Item item = new Item();
+                    itemData = item.loadItemData(reader);
+                    break;        
             }
+
+            Item actualItem = new Item();
+            actualItem.fromStr2Item(itemData);
+
+            // Read separator line (---)
+            String separator = reader.readLine();
+            
+            return actualItem;
+            
         } catch (IOException e) {
-            System.out.println("Error reading from file: " + e.getMessage());
+            System.out.println("Error reading item from file: " + e.getMessage());
+            return null;
         }
-        
-        if (data.length() > 0) {
-            String[] itemData = data.toString().split("\n");
-            if (itemData.length > 0) {
-                String itemType = itemData[0];
-                
-                // Create appropriate item type based on first line
-                if ("Sword".equals(itemType) && itemData.length >= 6) {
-                    item = new Weapon();
-                    // Skip the type line and pass the rest
-                    String[] actualData = new String[itemData.length - 1];
-                    System.arraycopy(itemData, 1, actualData, 0, actualData.length);
-                    item.fromStr2Item(actualData);
-                } else {
-                    // Default to regular Item
-                    item = new Item();
-                    String[] actualData = new String[itemData.length - 1];
-                    System.arraycopy(itemData, 1, actualData, 0, actualData.length);
-                    item.fromStr2Item(actualData);
-                }
-            }
-        }
-        
-        if (item == null) {
-            item = new Item(); // Return empty item if parsing failed
-        }
-        
-        return item;
     }
+
+    private String loadItemType(BufferedReader reader) {
+        try {
+            String itemType = reader.readLine();
+            if (itemType == null) {
+                return null;
+            } 
+            return itemType.trim().toUpperCase();
+        } catch (IOException e) {
+            System.out.println("Error reading item type: " + e.getMessage());
+        } 
+        return null;
+    }
+
 }

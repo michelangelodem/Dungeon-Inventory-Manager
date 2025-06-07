@@ -1,4 +1,6 @@
 package Items;
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.util.Scanner;
 
 public class Item {
@@ -181,6 +183,27 @@ public class Item {
     public String toString() {
         return String.format("Item{name='%s', description='%s', price=%.2f, weight=%.2f, quantity=%d}",
                 name, description, price, weight, quantity);
+    }
+
+    public String[] loadItemData(BufferedReader reader) throws IOException {
+            String name = reader.readLine();
+            String description = reader.readLine();
+            String priceStr = reader.readLine();
+            String weightStr = reader.readLine();
+            String[] itemData = new String[4];
+            // Check if any required field is null
+            if (name == null || description == null || priceStr == null || weightStr == null) {
+                System.out.println("Warning: Incomplete item data found in file");
+                return null;
+            }
+            
+            // Trim all strings
+            itemData[0] = name.trim();
+            itemData[1] = description.trim();
+            itemData[2] = priceStr.trim();
+            itemData[3] = weightStr.trim();
+
+            return itemData;
     }
 
 }

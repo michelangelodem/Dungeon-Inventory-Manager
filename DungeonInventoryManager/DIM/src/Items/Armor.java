@@ -1,4 +1,6 @@
 package Items;
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.util.Scanner;
 
 public class Armor extends Item {
@@ -69,4 +71,26 @@ public class Armor extends Item {
         return super.toString().replace("}", ", ArmorClass=" + armorClass + "'}");
     }
 
+    @Override
+    public String[] loadItemData(BufferedReader reader) {
+            
+        String[] itemData = new String[5];
+        try {
+            itemData = super.loadItemData(reader);
+            if (itemData == null || itemData.length < 5) {
+                System.out.println("Warning: Incomplete item data found in file for Weapon");
+                return null;
+            }
+            String armorClass = reader.readLine();
+            if (armorClass == null || armorClass.trim().isEmpty()) {
+                System.out.println("Warning: Incomplete damage data found in file for Weapon");
+                armorClass = "0";
+            }
+            itemData[4] = armorClass.trim();
+            return itemData;
+        } catch (IOException e) {
+            System.out.println("Error reading item data from file: " + e.getMessage());
+            return null;
+        }
+    }
 } 
