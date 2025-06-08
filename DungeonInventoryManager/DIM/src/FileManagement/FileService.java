@@ -96,6 +96,7 @@ public class FileService implements IFileService {
             }
         } catch (IOException e) {
             System.out.println("Error reading from file: " + e.getMessage());
+            items = null;
         }
         
         return items;
@@ -104,8 +105,12 @@ public class FileService implements IFileService {
     private Item readSingleItem(BufferedReader reader) {
         String[] itemData;
         String seperator = null;
-            
-        switch (loadItemType(reader)) {
+        String itemType = loadItemType(reader);
+        if (itemType == null) {    
+            return new Item();
+        }
+
+        switch (itemType) {
             case "WEAPON":
                 Weapon weapon = new Weapon();
                 itemData = weapon.loadItemData(reader);
@@ -128,13 +133,18 @@ public class FileService implements IFileService {
     }
 
     private String loadItemType(BufferedReader reader) {
+        String itemType = null;
         try {
-            String itemType = reader.readLine();
+            itemType = reader.readLine();
+            if (itemType == null) {
+                System.out.println("Warning: No item type found, returning null");
+                return null;
+            }
             return itemType.trim().toUpperCase();
         } catch (IOException e) {
             System.out.println("Error reading item type: " + e.getMessage());
+            return null;
         } 
-        return null;
     }
 
     private void catchSeparator(BufferedReader reader) {

@@ -187,11 +187,10 @@ public class Weapon extends Item {
     
     @Override
     public String[] loadItemData(BufferedReader reader) {
-        
-        String[] itemData = new String[5];
+
         try {
-            itemData = super.loadItemData(reader);
-            if (itemData == null || itemData.length < 5) {
+            String[] itemData = super.loadItemData(reader);
+            if (itemData == null || itemData.length < 4) {
                 System.out.println("Warning: Incomplete item data found in file for Weapon");
                 return null;
             }
@@ -201,8 +200,15 @@ public class Weapon extends Item {
                 System.out.println("Warning: Incomplete damage data found in file for Weapon");
                 damage = "1d6"; // Default damage if not provided
             }
-            itemData[4] = damage.trim();
-            return itemData;
+            String[] weaponData = {
+                itemData[0], // name
+                itemData[1], // description
+                itemData[2], // price
+                itemData[3], // weight
+                damage.trim() // damage
+            };
+
+            return weaponData ;
         } catch (IOException e) {
             System.out.println("Error reading item data from file: " + e.getMessage());
             return null;
