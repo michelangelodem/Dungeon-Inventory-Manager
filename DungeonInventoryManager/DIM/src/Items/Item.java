@@ -2,8 +2,10 @@ package Items;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Scanner;
+import InputValidation.*;
 
 public class Item {
+    InputHandler inputHandler = new InputHandler();
     private String name;
     private String description;
     private double price;
@@ -43,34 +45,25 @@ public class Item {
 
     // Setters with validation
     public void setName(String name) {
-        if (name == null || name.trim().isEmpty()) {
-            throw new IllegalArgumentException("Name cannot be null or empty");
-        }
-        this.name = name.trim();
+        StringValidator nameValidator = new StringValidator(name, "Please enter a valid name of 20 characters", 20);
+        this.name = inputHandler.getValidatedInput("Enter valid name (max 20 characters): ", nameValidator);
     }
 
     public void setDescription(String description) {
-        if (description == null || description.trim().isEmpty()) {
-            throw new IllegalArgumentException("Description cannot be null or empty");
-        }
-        if (description.length() > 100) {
-            throw new IllegalArgumentException("Description cannot exceed 100 characters");
-        }
-        this.description = description.trim();
+        StringValidator descriptionValidator = new StringValidator(description, "Please enter a valid description of 100 characters", 100);
+        this.description = inputHandler.getValidatedInput("Enter valid description (max 100 characters): ", descriptionValidator);
     }
 
-    public void setPrice(double price) {
-        if (price < 0) {
-            throw new IllegalArgumentException("Price cannot be negative");
-        }
-        this.price = price;
+    public void setPrice(String price) {
+        NumberValidator priceValidator = new NumberValidator(price);
+        price = inputHandler.getValidatedInput("Enter valid price (positive number): ", priceValidator);
+        this.price = Double.parseDouble(price);
     }
 
-    public void setWeight(double weight) {
-        if (weight < 0) {
-            throw new IllegalArgumentException("Weight cannot be negative");
-        }
-        this.weight = weight;
+    public void setWeight(String weight) {
+        NumberValidator weightValidator = new NumberValidator(weight);
+        weight = inputHandler.getValidatedInput("Enter valid weight (positive number): ", weightValidator);
+        this.weight = Double.parseDouble(weight);;
     }
 
     // Quantity management methods
@@ -129,7 +122,7 @@ public class Item {
         while (true) {
             try {
                 System.out.print("Enter item price: ");
-                double inputPrice = scanner.nextDouble();
+                String inputPrice = scanner.nextLine();
                 setPrice(inputPrice);
                 break;
             } catch (Exception e) {
@@ -141,7 +134,7 @@ public class Item {
         while (true) {
             try {
                 System.out.print("Enter item weight: ");
-                double inputWeight = scanner.nextDouble();
+                String inputWeight = scanner.nextLine();
                 setWeight(inputWeight);
                 scanner.nextLine(); // Consume leftover newline
                 break;
@@ -171,8 +164,8 @@ public class Item {
         try {
             setName(itemData[0]);
             setDescription(itemData[1]);
-            setPrice(Double.parseDouble(itemData[2]));
-            setWeight(Double.parseDouble(itemData[3]));
+            setPrice(itemData[2]);
+            setWeight(itemData[3]);
             this.quantity = 1; // Default quantity when loading from file
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Invalid item data: price or weight is not a valid number");

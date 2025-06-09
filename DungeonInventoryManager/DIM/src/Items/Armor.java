@@ -2,6 +2,7 @@ package Items;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Scanner;
+import InputValidation.NumberValidator;
 
 public class Armor extends Item {
     private int armorClass;
@@ -20,18 +21,17 @@ public class Armor extends Item {
         return armorClass;
     }
 
-    public void setArmorClass(int armorClass) {
-        if (armorClass < 0) {
-            armorClass = 0;
-        }
-        this.armorClass = armorClass;
+    public void setArmorClass(String armorClass) {
+        NumberValidator armorClassValidator = new NumberValidator(armorClass);
+        armorClass = inputHandler.getValidatedInput("Enter valid armor class (positive integer): ", armorClassValidator);
+        this.armorClass = Integer.parseInt(armorClass);
     }
 
      @Override
 
     public void PrintItem() {
         super.PrintItem();
-        System.out.println("Damage: " + getArmorClass());
+        System.out.println("Armor class: " + getArmorClass());
     }
 
     @Override
@@ -41,7 +41,7 @@ public class Armor extends Item {
         while (true) {
             try {
                 System.out.print("Enter armor's class: ");
-                int inputAC = scanner.nextInt();
+                String inputAC = scanner.nextLine();
                 setArmorClass(inputAC);
                 break;
             } catch (IllegalArgumentException e) {
@@ -59,10 +59,9 @@ public class Armor extends Item {
 
         super.fromStr2Item(itemData);
         try {
-            setArmorClass(Integer.parseInt(itemData[4]));
+            setArmorClass(itemData[4]);
         } catch (IllegalArgumentException e) {
-            System.out.println("Warning, Invalid damage value in file: " + e.getMessage());
-            this.setArmorClass(0); // Default AC if invalid
+            System.out.println("Warning, Invalid damage value in file: " + e.getMessage());// Default AC if invalid
         }
     }
 

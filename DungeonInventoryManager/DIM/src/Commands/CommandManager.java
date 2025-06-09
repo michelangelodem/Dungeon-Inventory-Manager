@@ -32,7 +32,7 @@ public class CommandManager {
         for (Map.Entry<Integer, ICommand> entry : commands.entrySet()) {
             System.out.println(entry.getKey() + ". " + entry.getValue().getDescription());
         }
-        System.out.print("Please enter your choice: ");
+        System.out.print("Please enter your choice: (0-" + (commands.size() - 1) + "): ");
     }
     
     public boolean executeCommand() {

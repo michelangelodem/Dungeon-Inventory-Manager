@@ -2,6 +2,8 @@ package Items;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Scanner;
+import InputValidation.DamageValidator;
+import InputValidation.InputHandler; 
 
 public class Weapon extends Item {
     private String damage;
@@ -21,57 +23,10 @@ public class Weapon extends Item {
         return damage;
     }
 
-    public void setDamage(String damage) {
-        if (checkIfValidDamageString(damage)) {    
-            this.damage = damage;
-        } else {
-            System.out.println("Invalid damage value. Please enter a valid string in form dice_num d dice_type.");
-        }
-        
-    }
-
-    /*
-    * In DnD, damage is typically represented as a string in the form "XdY", 
-    * where X is the number of dice and Y is the type of dice (e.g., "1d6" means one six-sided die).
-    * But many times a epon can deal more than one type of damage,
-    * so we can have a string like "1d6 + 2d8" or "1d6 + 1d10".
-    * checkIfValidDamage checks if the damage string is valid.
-    * It should be in the form "XdY" or "XdY + XdY", where X and Y are integers.
-    * checkIfValidDamageString checks the total damage string for validity.
-    * It should be in the form "XdY" or "XdY + XdY", where X and Y are integers.
-    */
-    
-    private boolean checkIfValidDamageString(String damage) {
-        if (damage.indexOf(" + ") != -1) {
-            String[] parts = damage.split(" \\+ ");
-            for (String part : parts) {
-                if (!checkIfValidDamage(part)) {
-                    return false;
-                }
-            }
-            return true;
-        } else {
-            return checkIfValidDamage(damage);
-        }
-    }
-
-    private boolean checkIfValidDamage(String damage) {
-            if (damage == null || damage.trim().isEmpty()) {
-                return false;
-            }
-            
-            String[] parts = damage.split("d");
-            if (parts.length != 2) {
-                return false;
-            }
-            
-            try {
-                int num = Integer.parseInt(parts[0].trim());
-                int type = Integer.parseInt(parts[1].trim());
-                return num > 0 && type > 0;
-            } catch (NumberFormatException e) {
-                return false;
-            }
+    private void setDamage(String damage) {
+        InputHandler inputHandler = new InputHandler();
+        DamageValidator damageValidator = new DamageValidator(damage);
+        this.damage = inputHandler.getValidatedInput("Enter valid damage (e.g., 1d6 + 2): ", damageValidator);
     }
 
     @Override
@@ -118,20 +73,14 @@ public class Weapon extends Item {
         return super.toString().replace("}", ", damage='" + damage + "'}");
     }
 
-    public int getMaxDamage() {
-        
-        if(checkIfValidDamageString(damage)) {
-        
-            String[] parts = damage.split(" \\+ ");
-            int maxDamage = 0;
+    public int getMaxDamage() {    
+        String[] parts = damage.split(" \\+ ");
+        int maxDamage = 0;
             
-            for (String part : parts) {
-                maxDamage += calculateParseMaxDamage(part);
-            }
-            
-            return maxDamage;
-        }
-        return 0;
+        for (String part : parts) {
+            maxDamage += calculateParseMaxDamage(part);
+        }            
+        return maxDamage;
     }
 
     private int calculateParseMaxDamage(String part) {
@@ -152,20 +101,14 @@ public class Weapon extends Item {
         return 0;
     }
 
-    public int getMinDamage() {
-        
-        if(checkIfValidDamageString(damage)) {
-        
-            String[] parts = damage.split(" \\+ ");
-            int minDamage = 0;
+    public int getMinDamage() {       
+        String[] parts = damage.split(" \\+ ");
+        int minDamage = 0;
             
-            for (String part : parts) {
-                minDamage += calculateParseMinDamage(part);
-            }
-            
-            return minDamage;
+        for (String part : parts) {
+            minDamage += calculateParseMinDamage(part);
         }
-        return 0;
+        return minDamage;
     }
 
     private int calculateParseMinDamage(String part) {
@@ -214,4 +157,5 @@ public class Weapon extends Item {
             return null;
         }
     }
+
 }
