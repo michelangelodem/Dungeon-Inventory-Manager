@@ -46,23 +46,23 @@ public class Item {
     // Setters with validation
     public void setName(String name) {
         StringValidator nameValidator = new StringValidator(name, "Please enter a valid name of 20 characters", 20);
-        this.name = inputHandler.getValidatedInput("Enter valid name (max 20 characters): ", nameValidator);
+        this.name = inputHandler.getValidatedInput(nameValidator);
     }
 
     public void setDescription(String description) {
         StringValidator descriptionValidator = new StringValidator(description, "Please enter a valid description of 100 characters", 100);
-        this.description = inputHandler.getValidatedInput("Enter valid description (max 100 characters): ", descriptionValidator);
+        this.description = inputHandler.getValidatedInput(descriptionValidator);
     }
 
     public void setPrice(String price) {
         NumberValidator priceValidator = new NumberValidator(price);
-        price = inputHandler.getValidatedInput("Enter valid price (positive number): ", priceValidator);
+        price = inputHandler.getValidatedInput(priceValidator);
         this.price = Double.parseDouble(price);
     }
 
     public void setWeight(String weight) {
         NumberValidator weightValidator = new NumberValidator(weight);
-        weight = inputHandler.getValidatedInput("Enter valid weight (positive number): ", weightValidator);
+        weight = inputHandler.getValidatedInput(weightValidator);
         this.weight = Double.parseDouble(weight);;
     }
 
@@ -99,7 +99,7 @@ public class Item {
     public void readItem(Scanner scanner) {
         while (true) {
             try {
-                System.out.print("Enter item name: ");
+                System.out.print("Enter name (max 20 characters): ");
                 String inputName = scanner.nextLine();
                 setName(inputName);
                 break;
@@ -110,7 +110,7 @@ public class Item {
 
         while (true) {
             try {
-                System.out.print("Enter item description: ");
+                System.out.print("Enter description: ");
                 String inputDescription = scanner.nextLine();
                 setDescription(inputDescription);
                 break;
@@ -121,7 +121,7 @@ public class Item {
 
         while (true) {
             try {
-                System.out.print("Enter item price: ");
+                System.out.print("Enter price ($): ");
                 String inputPrice = scanner.nextLine();
                 setPrice(inputPrice);
                 break;
@@ -133,10 +133,9 @@ public class Item {
 
         while (true) {
             try {
-                System.out.print("Enter item weight: ");
+                System.out.print("Enter weight (kg): ");
                 String inputWeight = scanner.nextLine();
                 setWeight(inputWeight);
-                scanner.nextLine(); // Consume leftover newline
                 break;
             } catch (Exception e) {
                 System.out.println("Error: Please enter a valid weight. Please try again.");
@@ -162,10 +161,10 @@ public class Item {
         }
         
         try {
-            setName(itemData[0]);
-            setDescription(itemData[1]);
-            setPrice(itemData[2]);
-            setWeight(itemData[3]);
+            this.name = (itemData[0]);
+            this.description = (itemData[1]);
+            this.price = Double.parseDouble(itemData[2]);
+            this.weight = Double.parseDouble(itemData[3]);
             this.quantity = 1; // Default quantity when loading from file
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Invalid item data: price or weight is not a valid number");

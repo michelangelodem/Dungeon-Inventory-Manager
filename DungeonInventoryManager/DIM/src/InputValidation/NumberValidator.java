@@ -7,6 +7,16 @@ public class NumberValidator implements IInputValidator {
         this.input = input;
     }
 
+    @Override    
+    public void setInput(String input) {
+        this.input = input;
+    }
+
+    @Override
+    public String getInput() {
+        return input;
+    }
+
     private boolean isInt() {
         try {
             Integer.parseInt(input);

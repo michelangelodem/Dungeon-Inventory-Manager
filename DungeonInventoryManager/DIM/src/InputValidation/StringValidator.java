@@ -5,6 +5,16 @@ public class StringValidator implements IInputValidator {
     private String errorMessage;
     private int maxLength;
 
+    @Override
+    public void setInput(String input) {
+        this.input = input;
+    }
+
+    @Override
+    public String getInput() {
+        return input;
+    }
+
     public StringValidator(String input, String errorMessage, int maxLength) {
         this.input = input;
         this.errorMessage = "";
@@ -13,6 +23,7 @@ public class StringValidator implements IInputValidator {
 
     @Override
     public boolean isValid() {
+        System.out.println("Validating input: " + input);
         if (input == null || input.trim().isEmpty()) {
             errorMessage = "Input cannot be null or empty";
             return false;

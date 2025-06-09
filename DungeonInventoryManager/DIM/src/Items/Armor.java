@@ -23,7 +23,7 @@ public class Armor extends Item {
 
     public void setArmorClass(String armorClass) {
         NumberValidator armorClassValidator = new NumberValidator(armorClass);
-        armorClass = inputHandler.getValidatedInput("Enter valid armor class (positive integer): ", armorClassValidator);
+        armorClass = inputHandler.getValidatedInput(armorClassValidator);
         this.armorClass = Integer.parseInt(armorClass);
     }
 
@@ -59,7 +59,7 @@ public class Armor extends Item {
 
         super.fromStr2Item(itemData);
         try {
-            setArmorClass(itemData[4]);
+            this.armorClass = Integer.parseInt(itemData[4]);
         } catch (IllegalArgumentException e) {
             System.out.println("Warning, Invalid damage value in file: " + e.getMessage());// Default AC if invalid
         }

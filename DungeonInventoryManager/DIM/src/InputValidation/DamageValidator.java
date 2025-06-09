@@ -7,6 +7,16 @@ public class DamageValidator implements IInputValidator {
     public DamageValidator(String damage) {
         this.damage = damage;
     }
+
+    @Override
+    public void setInput(String damage) {
+        this.damage = damage;
+    }
+
+    @Override
+    public String getInput() {
+        return damage;
+    }
                                                                         
     /*
     * In DnD, damage is typically represented as a string in the form "XdY", 

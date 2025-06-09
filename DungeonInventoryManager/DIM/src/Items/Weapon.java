@@ -26,7 +26,7 @@ public class Weapon extends Item {
     private void setDamage(String damage) {
         InputHandler inputHandler = new InputHandler();
         DamageValidator damageValidator = new DamageValidator(damage);
-        this.damage = inputHandler.getValidatedInput("Enter valid damage (e.g., 1d6 + 2): ", damageValidator);
+        this.damage = inputHandler.getValidatedInput(damageValidator);
     }
 
     @Override
@@ -61,10 +61,10 @@ public class Weapon extends Item {
 
         super.fromStr2Item(itemData);
         try {
-            setDamage(itemData[4]);
+            this.damage = (itemData[4]);
         } catch (IllegalArgumentException e) {
             System.out.println("Warning, Invalid damage value in file: " + e.getMessage());
-            this.setDamage("1d6"); // Default damage if invalid
+            this.damage = ("1d6"); // Default damage if invalid
         }
     }
 
