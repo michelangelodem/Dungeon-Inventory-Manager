@@ -1,50 +1,22 @@
 package Commands;
-import java.util.Scanner;
 
 import Inventory.IInventoryService;
-
+import InputValidation.IInputHandler;
+import InputValidation.StringValidator;
 
 public class RemoveItemCommand implements ICommand {
-    private final IInventoryService inventoryService;
-    private final Scanner scanner;
-    
-    public RemoveItemCommand(IInventoryService inventoryService, Scanner scanner) {
+    private IInventoryService inventoryService;
+    private IInputHandler inputHandler;
+
+    public RemoveItemCommand(IInventoryService inventoryService, IInputHandler inputHandler) {
         this.inventoryService = inventoryService;
-        this.scanner = scanner;
+        this.inputHandler = inputHandler;
     }
-    
+
     @Override
     public void execute() {
-        System.out.println("Removing item...\n");
-        
-        if (inventoryService.getItemCount() == 0) {
-            System.out.println("No items to remove.\n");
-            return;
-        }
-        
-        System.out.println("Enter the index of the item to remove (1 to " + 
-                          inventoryService.getItemCount() + "): ");
-        
-        try {
-            int index = scanner.nextInt() - 1;
-            scanner.nextLine(); // Consume leftover newline
-            
-            if (!inventoryService.removeItem(index)) {
-                System.out.println("Invalid index. Please try again.");
-            }
-        } catch (Exception e) {
-            System.out.println("Invalid input. Please enter a valid number.");
-            scanner.nextLine(); // Clear invalid input
-        }
+        String itemName = inputHandler.getStringInput("Enter the name of the item to remove:", new StringValidator());
+        inventoryService.removeItem(itemName);
     }
-    
-    @Override
-    public String getDescription() {
-        return "Remove Item";
-    }
-    
-    @Override
-    public int getCommandId() {
-        return 2;
-    }
-} 
+}
+

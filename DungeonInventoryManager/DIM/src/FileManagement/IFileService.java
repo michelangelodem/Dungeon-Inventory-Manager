@@ -1,11 +1,10 @@
 package FileManagement;
-import java.util.List;
 
+import java.util.List;
 import Items.Item;
 
 public interface IFileService {
-    List<Item> readItems();
-    boolean writeItems(Item[] items);
-    String getFileName();
-    void prepareFileForWrite();
+    void writeItemsToFile(List<Item> items, String filename);
+    List<Item> readItemsFromFile(String filename);
 }
+

@@ -1,15 +1,13 @@
 package Inventory;
+import Items.*;
+
 import java.util.List;
-
-import Items.Item;
-
 
 public interface IInventoryService {
     void addItem(Item item);
-    boolean removeItem(int index);
-    List<Item> getAllItems();
-    List<Item> searchItemsByName(String name);
-    int getItemCount();
-    void loadInventory();
-    void saveInventory();
+    void removeItem(String name);
+    void viewAllItems();
+    List<Item> searchItem(String name);
+    List<Weapon> getAllWeapons();
 }
+

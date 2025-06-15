@@ -1,70 +1,37 @@
 package Commands;
-import java.util.Scanner;
-import Items.*;
+
 import Inventory.IInventoryService;
+import InputValidation.IInputHandler;
+import InputValidation.ItemTypeValidator;
+import InputValidation.DoubleValidator;
+import InputValidation.StringValidator;
+import Items.Item;
+import Items.IItemFactory;
 
 public class AddItemCommand implements ICommand {
-    private final IInventoryService inventoryService;
-    private final Scanner scanner;
-    
-    public AddItemCommand(IInventoryService inventoryService, Scanner scanner) {
+    private IInventoryService inventoryService;
+    private IInputHandler inputHandler;
+    private IItemFactory itemFactory;
+
+    public AddItemCommand(IInventoryService inventoryService, IInputHandler inputHandler, IItemFactory itemFactory) {
         this.inventoryService = inventoryService;
-        this.scanner = scanner;
+        this.inputHandler = inputHandler;
+        this.itemFactory = itemFactory;
     }
-    
+
     @Override
     public void execute() {
-        System.out.println("Adding item...\n");
-        
-        // Ask user what type of item to add
-        System.out.println("What type of item would you like to add?");
-        System.out.println("1. Regular Item");
-        System.out.println("2. Sword");
-        System.out.println("3. Armor");
-        System.out.print("Enter your choice: ");
-        
-        try {
-            int itemType = scanner.nextInt();
-            scanner.nextLine(); // Consume leftover newline
-            
-            Item newItem;
-            switch (itemType) {
-                case 1:
-                    newItem = new Item();
-                    break;
-                case 2:
-                    newItem = new Weapon();
-                    break;
-                case 3:
-                    newItem = new Armor();
-                    break;
-                default:
-                    System.out.println("Invalid choice. Adding regular item.");
-                    newItem = new Item();
-                    break;
-            }
-            
-            newItem.readItem(scanner);
+        String itemType = inputHandler.getStringInput("Enter item type (Weapon/Armor/Regular):", new ItemTypeValidator());
+        String name = inputHandler.getStringInput("Enter item name:", new StringValidator());
+        String description = inputHandler.getStringInput("Enter item description (appearance and capabilities):", new StringValidator());
+        double price = inputHandler.getDoubleInput("Enter item price:", new DoubleValidator(0.0, Double.MAX_VALUE));
+        double weight = inputHandler.getDoubleInput("Enter item weight:", new DoubleValidator(0.0, Double.MAX_VALUE));
+
+        Item newItem = itemFactory.createItem(itemType, name, description, price, weight, inputHandler);
+
+        if (newItem != null) {
             inventoryService.addItem(newItem);
-            System.out.println(inventoryService.getItemCount() + " Items in Inventory.\n");
-            
-        } catch (Exception e) {
-            System.out.println("Invalid input. Adding regular item.");
-            scanner.nextLine(); // Clear invalid input
-            Item newItem = new Item();
-            newItem.readItem(scanner);
-            inventoryService.addItem(newItem);
-            System.out.println(inventoryService.getItemCount() + " Items in Inventory.\n");
         }
     }
-    
-    @Override
-    public String getDescription() {
-        return "Add Item";
-    }
-    
-    @Override
-    public int getCommandId() {
-        return 1;
-    }
 }
+

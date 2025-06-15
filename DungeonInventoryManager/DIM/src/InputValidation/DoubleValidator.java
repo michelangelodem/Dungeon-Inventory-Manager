@@ -1,16 +1,16 @@
 package InputValidation;
 
-public class NumberValidator implements IInputValidator<Integer> {
-    private int min;
-    private int max;
+public class DoubleValidator implements IInputValidator<Double> {
+    private double min;
+    private double max;
 
-    public NumberValidator(int min, int max) {
+    public DoubleValidator(double min, double max) {
         this.min = min;
         this.max = max;
     }
 
     @Override
-    public boolean isValid(Integer input) {
+    public boolean isValid(Double input) {
         return input != null && input >= min && input <= max;
     }
 

@@ -1,8 +1,7 @@
 package InputValidation;
 
-public interface IInputValidator {
-    String getInput();
-    void setInput(String input);
-    boolean isValid();
+public interface IInputValidator<T> {
+    boolean isValid(T input);
     String getErrorMessage();
 }
+
