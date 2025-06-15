@@ -7,7 +7,7 @@ import java.util.List;
 
 public class FileService implements IFileService {
 
-    private static final String FILE_PATH = "inventory.dat";
+    private static final String filename = "inventory.dat";
 
     @Override
     public void writeItemsToFile(List<Item> items, String filename) {

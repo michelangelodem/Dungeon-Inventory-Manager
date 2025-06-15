@@ -37,7 +37,8 @@ public class InventoryManagementSystem {
         commandManager.addCommand("3", new ViewItemsCommand(inventoryService));
         commandManager.addCommand("4", new SearchItemsCommand(inventoryService, inputHandler));
         commandManager.addCommand("5", new MakeAttackCommand(inventoryService, inputHandler));
-        commandManager.addCommand("6", new ExitCommand(inventoryService, fileService));
+        commandManager.addCommand("6", new ExportInventoryCommand(inventoryService));
+        commandManager.addCommand("7", new ExitCommand(inventoryService, fileService));
     }
 
     private static void runSystem() {
@@ -49,7 +50,8 @@ public class InventoryManagementSystem {
             System.out.println("3. View Items");
             System.out.println("4. Search Items");
             System.out.println("5. Make Attack");
-            System.out.println("6. Exit");
+            System.out.println("6: Copy Inventory to txt file");
+            System.out.println("7. Exit");
             String command = scanner.nextLine().toLowerCase();
             commandManager.executeCommand(command);
         }

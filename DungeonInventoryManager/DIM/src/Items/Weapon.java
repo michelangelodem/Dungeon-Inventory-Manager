@@ -1,5 +1,8 @@
 package Items;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+
 public class Weapon extends Item {
     private String damageRoll;
 
@@ -15,6 +18,11 @@ public class Weapon extends Item {
     @Override
     public void display() {
         System.out.println("Weapon: " + getName() + ", Description: " + getDescription() + ", Price: " + getPrice() + ", Weight: " + getWeight() + ", Damage: " + damageRoll);
+    }
+
+    @Override
+    protected void writeSpecificData(BufferedWriter writer) throws IOException {
+        writer.write("Damage: " + damageRoll + "\n");
     }
 }
 

@@ -1,5 +1,8 @@
 package Items;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+
 public class Armor extends Item {
     private int defense;
 
@@ -16,5 +19,11 @@ public class Armor extends Item {
     public void display() {
         System.out.println("Armor: " + getName() + ", Description: " + getDescription() + ", Price: " + getPrice() + ", Weight: " + getWeight() + ", Defense: " + defense);
     }
+
+    @Override 
+    protected void writeSpecificData(BufferedWriter writer) throws IOException {
+        writer.write("Armor Class:" + defense + "\n");
+    }
+    
 }
 

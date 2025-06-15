@@ -1,6 +1,6 @@
 package Inventory;
-import Items.*;
 
+import Items.*;
 import java.util.List;
 
 public interface IInventoryService {
@@ -11,4 +11,3 @@ public interface IInventoryService {
     List<Weapon> getAllWeapons();
     List<Item> getAllItems();
 }
-

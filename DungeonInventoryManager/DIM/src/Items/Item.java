@@ -1,5 +1,7 @@
 package Items;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.io.Serializable;
 
 public abstract class Item implements Serializable {
@@ -31,6 +33,17 @@ public abstract class Item implements Serializable {
         return weight;
     }
 
+    protected abstract void writeSpecificData(BufferedWriter writer) throws IOException;
+
     public abstract void display();
+
+        
+    public void writeToStream(BufferedWriter writer) throws IOException {
+        writer.write("Name: " + name + "\n");
+        writer.write("Description: " + description + "\n");
+        writer.write("Price: " + price + "\n");
+        writer.write("Weight: " + weight + "\n");
+        writeSpecificData(writer); // Call the abstract method
+    }
 }
 
