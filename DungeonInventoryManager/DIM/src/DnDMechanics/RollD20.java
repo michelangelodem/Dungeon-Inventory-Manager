@@ -27,7 +27,7 @@ public class RollD20 {
     public int roll_dice() {
         int result = 0;
         for (int i = 0; i < 10; i++) {
-            result =+ Roll();    
+            result += Roll();    
         }
 
         return result / 10; 
