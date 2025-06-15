@@ -5,9 +5,13 @@ import Commands.*;
 import Inventory.InventoryService;
 import InputValidation.IInputHandler;
 import InputValidation.InputHandler;
+import Items.Item;
 import Items.ItemFactory;
 import Items.IItemFactory;
+import FileManagement.FileService;
 import java.util.Scanner;
+import java.util.List;
+
 
 public class InventoryManagementSystem {
 
@@ -16,8 +20,13 @@ public class InventoryManagementSystem {
     private static Scanner scanner = new Scanner(System.in);
     private static IInputHandler inputHandler = new InputHandler(scanner);
     private static IItemFactory itemFactory = new ItemFactory();
+    private static FileService fileService = new FileService();
 
     public static void main(String[] args) {
+        // Load inventory at startup
+        List<Item> loadedItems = fileService.readItemsFromFile("inventory.dat");
+        loadedItems.forEach(item -> inventoryService.addItem(item)); // Add loaded items to the service
+
         initializeCommands();
         runSystem();
     }
@@ -28,7 +37,7 @@ public class InventoryManagementSystem {
         commandManager.addCommand("3", new ViewItemsCommand(inventoryService));
         commandManager.addCommand("4", new SearchItemsCommand(inventoryService, inputHandler));
         commandManager.addCommand("5", new MakeAttackCommand(inventoryService, inputHandler));
-        commandManager.addCommand("6", new ExitCommand());
+        commandManager.addCommand("6", new ExitCommand(inventoryService, fileService));
     }
 
     private static void runSystem() {
@@ -46,4 +55,6 @@ public class InventoryManagementSystem {
         }
     }
 }
+
+
 

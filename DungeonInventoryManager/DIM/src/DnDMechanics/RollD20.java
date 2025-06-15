@@ -6,9 +6,9 @@ import InputValidation.NumberValidator;
 
 public class RollD20 {
 
-    public final int ROLL_WITH_ADVANTAGE = 1;
-    public final int ROLL_WITH_DISADVANTAGE = 2;
-    public final int ROLL_NORMAL = 0;
+    private final int ROLL_WITH_ADVANTAGE = 1;
+    private final int ROLL_WITH_DISADVANTAGE = 2;
+    private final int ROLL_NORMAL = 0;
 
     private int setRollType(IInputHandler inputHandler) {
         System.out.println("Choose a roll type:");

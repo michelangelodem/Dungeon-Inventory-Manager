@@ -47,5 +47,12 @@ public class InventoryService implements IInventoryService {
                 .map(item -> (Weapon) item)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public List<Item> getAllItems() {
+        return new ArrayList<>(items);
+    }
 }
+
+
 

@@ -9,5 +9,6 @@ public interface IInventoryService {
     void viewAllItems();
     List<Item> searchItem(String name);
     List<Weapon> getAllWeapons();
+    List<Item> getAllItems();
 }
 
