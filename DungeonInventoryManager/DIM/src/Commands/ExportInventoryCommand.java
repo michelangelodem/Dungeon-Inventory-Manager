@@ -28,14 +28,10 @@ public class ExportInventoryCommand implements ICommand {
     public void execute() {
         prepareFileForWrite();
         List<Item> items = is.getAllItems();
-        try {
-            for (Item item : items) {
-                writeItemToFile(item);
-            }
-            System.out.println("Items copied to:" + TXT_FILENAME);
-        } catch (Exception e) {
-            System.out.println("Error writing items: " + e.getMessage());
+        for (Item item : items) {
+            writeItemToFile(item);
         }
+        System.out.println("Items copied to:" + TXT_FILENAME);
     }
 
     private void writeItemToFile(Item item) {
