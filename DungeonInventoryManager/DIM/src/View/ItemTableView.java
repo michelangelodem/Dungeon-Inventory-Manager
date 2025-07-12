@@ -18,7 +18,14 @@ public class ItemTableView {
     public ItemTableView(List<Item> items) {
         data = FXCollections.observableArrayList(items);
         table = new TableView<>(data);
-
+        setupTable();
+    }
+    
+    private void setupTable() {
+        // Clear existing columns
+        table.getColumns().clear();
+        
+        // Create columns
         setTableColumns("Name");
         setTableColumns("Description");
         setTableColumns("Price");
@@ -45,13 +52,21 @@ public class ItemTableView {
         table.getColumns().add(typeCol);
         table.getColumns().add(extraCol);
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+        
+        // Add some styling
+        table.setStyle("-fx-background-color: #ffffff; -fx-border-color: #2f6faeff; -fx-border-width: 1px; -fx-border-radius: 5px;");
     }
 
     private void setTableColumns(String name) {
         TableColumn<Item, String> col = new TableColumn<>(name);
         col.setCellValueFactory(new PropertyValueFactory<>(name));
         table.getColumns().add(col);
-
+    }
+    
+    public void updateItems(List<Item> newItems) {
+        data.clear();
+        data.addAll(newItems);
+        table.refresh();
     }
 
     public TableView<Item> getTableView() {

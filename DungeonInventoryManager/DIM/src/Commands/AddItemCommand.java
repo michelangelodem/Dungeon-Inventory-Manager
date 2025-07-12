@@ -2,6 +2,7 @@ package Commands;
 
 import Inventory.IInventoryService;
 import InputValidation.IInputHandler;
+import InputValidation.GUIInputHandler;
 import InputValidation.ItemTypeValidator;
 import InputValidation.DoubleValidator;
 import InputValidation.StringValidator;
@@ -15,7 +16,7 @@ public class AddItemCommand implements ICommand {
 
     public AddItemCommand(IInventoryService inventoryService, IInputHandler inputHandler, IItemFactory itemFactory) {
         this.inventoryService = inventoryService;
-        this.inputHandler = inputHandler;
+        this.inputHandler = new GUIInputHandler();
         this.itemFactory = itemFactory;
     }
 
