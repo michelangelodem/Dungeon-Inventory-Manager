@@ -25,9 +25,18 @@ public class ItemTableView {
         // Clear existing columns
         table.getColumns().clear();
         
-        // Create columns
+        // Create basic columns
         setTableColumns("Name");
-        setTableColumns("Description");
+        
+        // Create custom description column with button
+        TableColumn<Item, String> descriptionCol = new TableColumn<>("Description");
+        descriptionCol.setCellValueFactory(new PropertyValueFactory<>("description"));
+        descriptionCol.setCellFactory(col -> new ItemDescriptionCell());
+        descriptionCol.setPrefWidth(120); // Set a fixed width for the button column
+        descriptionCol.setResizable(false);
+        table.getColumns().add(descriptionCol);
+        
+        // Continue with other columns
         setTableColumns("Price");
         setTableColumns("Weight");
 

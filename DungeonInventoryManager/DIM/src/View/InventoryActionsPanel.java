@@ -129,16 +129,25 @@ public class InventoryActionsPanel {
             showError("No items in inventory to remove.");
             return;
         }
+
+        // When you create a ChoiceDialog<Item>, 
+        // JavaFX uses the toString() method of the Item objects to display them in the dropdown.
+        // This made the dialog show the Item Object's Class and HashCode instead of the item name.
+        // To fix this, we need to extract the item names and use them in the ChoiceDialog.
+
+        List<String> itemNames = items.stream()
+            .map(Item::getName)
+            .collect(java.util.stream.Collectors.toList());
         
         // Create a choice dialog with all items
-        ChoiceDialog<Item> dialog = new ChoiceDialog<>(items.get(0), items);
+        ChoiceDialog<String> dialog = new ChoiceDialog<>(itemNames.get(0), itemNames);
         dialog.setTitle("Remove Item");
         dialog.setHeaderText("Select item to remove:");
         dialog.setContentText("Item:");
         
-        Optional<Item> result = dialog.showAndWait();
+        Optional<String> result = dialog.showAndWait();
         if (result.isPresent()) {
-            inventoryService.removeItem(result.get().getName());
+            inventoryService.removeItem(result.get());
             refreshCallback.run();
             showSuccess("Item removed successfully!");
         }

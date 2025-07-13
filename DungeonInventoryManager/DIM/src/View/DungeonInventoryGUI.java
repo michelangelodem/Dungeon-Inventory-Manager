@@ -14,10 +14,10 @@ import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.Button;
-import javafx.scene.control.ScrollPane;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.stage.Stage;
+import javafx.scene.image.Image;
 
 public class DungeonInventoryGUI extends Application {
     private static InventoryService inventoryService = new InventoryService();
@@ -31,6 +31,12 @@ public class DungeonInventoryGUI extends Application {
     public void start(Stage primaryStage) {
         this.primaryStage = primaryStage;
         
+        try {
+            Image icon = new Image(getClass().getResourceAsStream( "/resources/icons/app_icon.png"));
+            primaryStage.getIcons().add(icon);
+        } catch (Exception e) {
+            System.err.println("Could not load application icon: " + e.getMessage());
+        }
         // Show authentication view first
         AuthView authView = new AuthView(primaryStage, this::showMainInventory);
         authView.show();
