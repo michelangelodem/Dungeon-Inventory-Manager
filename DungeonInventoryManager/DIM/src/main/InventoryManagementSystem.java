@@ -12,7 +12,6 @@ import FileManagement.FileService;
 import java.util.Scanner;
 import java.util.List;
 
-
 public class InventoryManagementSystem {
 
     private static InventoryService inventoryService = new InventoryService();

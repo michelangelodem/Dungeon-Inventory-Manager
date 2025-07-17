@@ -2,27 +2,44 @@ package Commands;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+
 import DnDMechanics.DamageCalculator;
 import DnDMechanics.RollD20;
 import Inventory.IInventoryService;
 import Items.Weapon;
 import InputValidation.IInputHandler;
+import InputValidation.IInputValidator;
 import InputValidation.GUIInputHandler;
 import javafx.scene.control.*;
-import javafx.scene.layout.GridPane;
 import javafx.geometry.Insets;
 import javafx.scene.layout.VBox;
 import javafx.geometry.Pos;
+import View.SetGrid;
 
 public class MakeAttackCommand implements ICommand {
-    private IInventoryService inventoryService;
+    IInputValidator<Integer> intValidator = new IInputValidator<Integer>() {
+        @Override
+        public boolean isValid(Integer value) {
+            return value != null && value >= 1 && value <= 30; // or your logic
+        }
+        @Override
+        public String getErrorMessage() {
+            return "Please enter a valid integer between 1 and 30.";
+        }
+    };
     private IInputHandler inputHandler;
+    private IInventoryService inventoryService;
+    // Using DnD mechanics classes for rolling and damage calculation
     private RollD20 rollD20;
     private DamageCalculator damageCalculator;
 
     // Default threshold to pass for a successful attack
     private int thresholdToPass = 10;
+    // Modifier for the attack roll, can be set by user input
+    private int modifier = 0;
 
+    // Constructor for console mode
     public MakeAttackCommand(IInventoryService inventoryService, IInputHandler inputHandler) {
         this.inventoryService = inventoryService;
         this.inputHandler = inputHandler;
@@ -46,150 +63,59 @@ public class MakeAttackCommand implements ICommand {
             return;
         }
 
-        // Show weapon selection dialog
-        Optional<Weapon> selectedWeapon = showWeaponSelectionDialog(weapons);
+        // Use SetGrid for weapon selection
+        SetGrid<Weapon> weaponGrid = new SetGrid<>(
+            "Select Weapon",
+            "Choose a weapon for your attack:",
+            null,
+            null,
+            new GUIInputHandler(),
+            null,
+            null
+        );
+        Optional<Weapon> selectedWeapon = weaponGrid.showSelectionDialog(weapons, "Choose a weapon for your attack:");
         if (!selectedWeapon.isPresent()) {
             return; // User cancelled
         }
-
         Weapon chosenWeapon = selectedWeapon.get();
 
-        // Get threshold from user
-        Optional<Integer> threshold = showThresholdDialog();
+        // Use SetGrid for threshold input
+        SetGrid<Integer> thresholdGrid = new SetGrid<>(
+            "Set Attack Threshold",
+            "Enter the Armor Class (AC) or difficulty threshold:",
+            "10",
+            "AC/Threshold",
+            new GUIInputHandler(),
+            intValidator,
+            Integer::parseInt
+        );
+        Optional<Integer> threshold = thresholdGrid.showDialog();
         if (!threshold.isPresent()) {
             return; // User cancelled
         }
 
+        // Use SetGrid for attack modifier input
+        SetGrid<Integer> modifierGrid = new SetGrid<>(
+            "Set Attack Modifier",
+            "Enter the attack modifier for your roll (e.g., +2, -1)",
+            "0",
+            "Attack Modifier",
+            new GUIInputHandler(),
+            intValidator,
+            Integer::parseInt
+        );
+        Optional<Integer> attackModifier = modifierGrid.showDialog();
+        if (!attackModifier.isPresent()) {
+            return; // User cancelled
+        }
+
+        this.modifier = attackModifier.get();
         this.thresholdToPass = threshold.get();
 
         // Perform the attack
         performAttack(chosenWeapon);
     }
 
-    private Optional<Weapon> showWeaponSelectionDialog(List<Weapon> weapons) {
-        Dialog<Weapon> dialog = new Dialog<>();
-        dialog.setTitle("Select Weapon");
-        dialog.setHeaderText("Choose a weapon for your attack:");
-
-        // Create the weapon selection content
-        VBox content = new VBox(10);
-        content.setPadding(new Insets(10));
-
-        ListView<Weapon> weaponList = new ListView<>();
-        weaponList.getItems().addAll(weapons);
-        weaponList.setPrefHeight(200);
-
-        // Custom cell factory to display weapon details
-        weaponList.setCellFactory(listView -> new ListCell<Weapon>() {
-            @Override
-            protected void updateItem(Weapon weapon, boolean empty) {
-                super.updateItem(weapon, empty);
-                if (empty || weapon == null) {
-                    setText(null);
-                } else {
-                    setText(weapon.getName() + " (Damage: " + weapon.getDamageRoll() + 
-                           ", Weight: " + weapon.getWeight() + " lbs)");
-                }
-            }
-        });
-
-        content.getChildren().addAll(
-            new Label("Available Weapons:"),
-            weaponList
-        );
-
-        dialog.getDialogPane().setContent(content);
-
-        // Add buttons
-        ButtonType selectButtonType = new ButtonType("Select", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(selectButtonType, ButtonType.CANCEL);
-
-        // Get the select button and initially disable it
-        Button selectButton = (Button) dialog.getDialogPane().lookupButton(selectButtonType);
-        selectButton.setDisable(true);
-
-        // Select first weapon by default and enable button
-        if (!weapons.isEmpty()) {
-            weaponList.getSelectionModel().select(0);
-            selectButton.setDisable(false); // Enable since we have a selection
-        }
-
-        // Enable/disable select button based on selection changes
-        weaponList.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
-            selectButton.setDisable(newSelection == null);
-        });
-
-        // Convert result
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == selectButtonType) {
-                return weaponList.getSelectionModel().getSelectedItem();
-            }
-            return null;
-        });
-
-        return dialog.showAndWait();
-    }
-
-    private Optional<Integer> showThresholdDialog() {
-        Dialog<Integer> dialog = new Dialog<>();
-        dialog.setTitle("Set Attack Threshold");
-        dialog.setHeaderText("Enter the Armor Class (AC) or difficulty threshold:");
-
-        // Create the threshold input content
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(20, 150, 10, 10));
-
-        TextField thresholdField = new TextField();
-        thresholdField.setText("10"); // Default value
-        thresholdField.setPromptText("Enter threshold (1-30)");
-
-        // Add some common AC examples
-        VBox examples = new VBox(5);
-        examples.getChildren().addAll(
-            new Label("Common AC Values:"),
-            new Label("• Easy Target: 8-10"),
-            new Label("• Medium Target: 12-14"),
-            new Label("• Hard Target: 15-17"),
-            new Label("• Very Hard Target: 18-20")
-        );
-
-        grid.add(new Label("AC/Threshold:"), 0, 0);
-        grid.add(thresholdField, 1, 0);
-        grid.add(examples, 0, 1, 2, 1);
-
-        dialog.getDialogPane().setContent(grid);
-
-        // Add buttons
-        ButtonType okButtonType = new ButtonType("OK", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(okButtonType, ButtonType.CANCEL);
-
-        // Validate input
-        Button okButton = (Button) dialog.getDialogPane().lookupButton(okButtonType);
-        thresholdField.textProperty().addListener((observable, oldValue, newValue) -> {
-            try {
-                int value = Integer.parseInt(newValue);
-                okButton.setDisable(value < 1 || value > 30);
-            } catch (NumberFormatException e) {
-                okButton.setDisable(true);
-            }
-        });
-
-        // Convert result
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == okButtonType) {
-                try {
-                    return Integer.parseInt(thresholdField.getText());
-                } catch (NumberFormatException e) {
-                    return null;
-                }
-            }
-            return null;
-        });
-
-        return dialog.showAndWait();
-    }
 
     private void performAttack(Weapon weapon) {
         // Create a custom dialog for the attack roll process
@@ -228,7 +154,7 @@ public class MakeAttackCommand implements ICommand {
             }
             
             // Perform the attack roll based on selected type
-            int attackRoll = performRollBasedOnType(rollType.get());
+            int attackRoll = performRollBasedOnType(rollType.get()) + modifier;
             
             StringBuilder details = new StringBuilder();
             details.append("=== ATTACK ROLL ===\n");

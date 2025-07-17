@@ -6,6 +6,8 @@ import Items.ItemFactory;
 import Items.Item;
 import Items.Weapon;
 import InputValidation.GUIInputHandler;
+import InputValidation.IInputValidator;
+import InputValidation.IInputValidator;
 import FileManagement.FileService;
 import User.User;
 
@@ -17,6 +19,7 @@ import java.util.List;
 import java.util.Optional;
 
 public class InventoryActionsPanel {
+    private IInputValidator<Integer> validator;
     private VBox actionsPanel;
     private InventoryService inventoryService;
     private GUIInputHandler inputHandler;
@@ -165,7 +168,7 @@ public class InventoryActionsPanel {
             return;
         }
         
-        MakeAttackCommand command = new MakeAttackCommand(inventoryService, inputHandler);
+        MakeAttackCommand command = new MakeAttackCommand(inventoryService);
         command.execute();
     }
     

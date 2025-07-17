@@ -12,9 +12,10 @@ import javafx.geometry.Insets;
 
 public class ItemDescriptionCell extends TableCell<Item, String> {
     private final Button viewButton;
-    
+
     public ItemDescriptionCell() {
-        viewButton = new Button("View");
+
+        viewButton = new Button();
         viewButton.setStyle("-fx-font-size: 10px; -fx-padding: 4px 8px; -fx-background-color: #007bff; -fx-text-fill: white; -fx-border-radius: 3px; -fx-background-radius: 3px;");
         viewButton.setOnMouseEntered(e -> viewButton.setStyle("-fx-font-size: 10px; -fx-padding: 4px 8px; -fx-background-color: #0056b3; -fx-text-fill: white; -fx-border-radius: 3px; -fx-background-radius: 3px;"));
         viewButton.setOnMouseExited(e -> viewButton.setStyle("-fx-font-size: 10px; -fx-padding: 4px 8px; -fx-background-color: #007bff; -fx-text-fill: white; -fx-border-radius: 3px; -fx-background-radius: 3px;"));
@@ -34,6 +35,7 @@ public class ItemDescriptionCell extends TableCell<Item, String> {
         if (empty || item == null) {
             setGraphic(null);
         } else {
+            viewButton.setText(item);
             setGraphic(viewButton);
         }
     }

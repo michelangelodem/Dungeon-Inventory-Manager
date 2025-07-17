@@ -24,5 +24,10 @@ public class Weapon extends Item {
     protected void writeSpecificData(BufferedWriter writer) throws IOException {
         writer.write("Damage: " + damageRoll + "\n");
     }
+
+    @Override
+    public String toString() {
+        return getName() + " (Damage: " + damageRoll + ")";
+    }
 }
 

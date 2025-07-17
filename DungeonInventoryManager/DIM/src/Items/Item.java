@@ -45,5 +45,10 @@ public abstract class Item implements Serializable {
         writer.write("Weight: " + weight + "\n");
         writeSpecificData(writer); // Call the abstract method
     }
+
+    @Override
+    public String toString() {
+        return getName();
+    }
 }
 

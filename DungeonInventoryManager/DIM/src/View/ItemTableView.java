@@ -27,9 +27,9 @@ public class ItemTableView {
         
         // Create basic columns
         setTableColumns("Name");
-        
-        // Create custom description column with button
+
         TableColumn<Item, String> descriptionCol = new TableColumn<>("Description");
+        
         descriptionCol.setCellValueFactory(new PropertyValueFactory<>("description"));
         descriptionCol.setCellFactory(col -> new ItemDescriptionCell());
         descriptionCol.setPrefWidth(120); // Set a fixed width for the button column
@@ -63,7 +63,7 @@ public class ItemTableView {
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         
         // Add some styling
-        table.setStyle("-fx-background-color: #ffffff; -fx-border-color: #2f6faeff; -fx-border-width: 1px; -fx-border-radius: 5px;");
+        table.setStyle("-fx-background-color: #2d0f64ff; -fx-border-color: #2f6faeff; -fx-border-width: 1px; -fx-border-radius: 5px;");
     }
 
     private void setTableColumns(String name) {

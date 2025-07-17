@@ -25,5 +25,9 @@ public class Armor extends Item {
         writer.write("Armor Class:" + defense + "\n");
     }
     
+    @Override
+    public String toString() {
+        return getName() + " (Armor Class: " + defense + ")";
+    }
 }
 
