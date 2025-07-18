@@ -15,12 +15,9 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.geometry.Insets;
 import javafx.scene.layout.VBox;
-import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
 
 import java.util.function.Function;
-
-import Items.*;
 
 public class SetGrid<T> {
     private IInputValidator<T> validator;

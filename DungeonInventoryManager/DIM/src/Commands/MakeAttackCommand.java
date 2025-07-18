@@ -2,7 +2,6 @@ package Commands;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import DnDMechanics.DamageCalculator;
 import DnDMechanics.RollD20;
@@ -10,6 +9,7 @@ import Inventory.IInventoryService;
 import Items.Weapon;
 import InputValidation.IInputHandler;
 import InputValidation.IInputValidator;
+import InputValidation.NumberValidator;
 import InputValidation.GUIInputHandler;
 import javafx.scene.control.*;
 import javafx.geometry.Insets;
@@ -18,17 +18,7 @@ import javafx.geometry.Pos;
 import View.SetGrid;
 
 public class MakeAttackCommand implements ICommand {
-    IInputValidator<Integer> intValidator = new IInputValidator<Integer>() {
-        @Override
-        public boolean isValid(Integer value) {
-            return value != null && value >= 1 && value <= 30; // or your logic
-        }
-        @Override
-        public String getErrorMessage() {
-            return "Please enter a valid integer between 1 and 30.";
-        }
-    };
-    private IInputHandler inputHandler;
+    IInputValidator<Integer> intValidator = new NumberValidator(1, 30);
     private IInventoryService inventoryService;
     // Using DnD mechanics classes for rolling and damage calculation
     private RollD20 rollD20;
@@ -36,13 +26,13 @@ public class MakeAttackCommand implements ICommand {
 
     // Default threshold to pass for a successful attack
     private int thresholdToPass = 10;
+
     // Modifier for the attack roll, can be set by user input
     private int modifier = 0;
 
     // Constructor for console mode
     public MakeAttackCommand(IInventoryService inventoryService, IInputHandler inputHandler) {
         this.inventoryService = inventoryService;
-        this.inputHandler = inputHandler;
         this.rollD20 = new RollD20();
         this.damageCalculator = new DamageCalculator();
     }
@@ -50,7 +40,6 @@ public class MakeAttackCommand implements ICommand {
     // Alternative constructor for GUI mode
     public MakeAttackCommand(IInventoryService inventoryService) {
         this.inventoryService = inventoryService;
-        this.inputHandler = new GUIInputHandler();
         this.rollD20 = new RollD20();
         this.damageCalculator = new DamageCalculator();
     }
