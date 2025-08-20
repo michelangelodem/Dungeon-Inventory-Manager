@@ -1,4 +1,5 @@
 lib
+target
 bin
 *.txt
 *.dat
